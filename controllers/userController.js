@@ -8,10 +8,9 @@ let verificationTokens = {};
 const transporter = nodemailer.createTransport({
   host: "smtp.mailgun.org",
   port: 587,
-  secure: false,
   auth: {
-    user: process.env.EMAIL_USER, // replace with your Mailgun username
-    pass: process.env.EMAIL_PASS, // replace with your Mailgun password
+    user: "postmaster@sandboxaa9292392f2b4f01a7eecde046fcc283.mailgun.org", // replace with your Mailgun username
+    pass: "b94bafa63b5b593fa06dc0dbe9134f8e-667818f5-60b224e6", // replace with your Mailgun password
   },
 });
 
@@ -47,7 +46,7 @@ const sendVerification = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error sending verification email.' });
-  }
+  } 
 };
 
 // Verify token and complete registration
@@ -84,12 +83,8 @@ const verificatinResult= (req, res) => {
       clearInterval(pollInterval);
       res.status(200).json({ verified: true, message: 'Email verified successfully!' });
     }
-  }, 1000); // Poll every second
+  }, 1000); 
 };
-
-
-
-
 
 
 const registerUser = async (req, res) => {
@@ -116,6 +111,7 @@ const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await userModel.getUserByEmail(email);
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }

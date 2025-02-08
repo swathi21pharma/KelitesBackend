@@ -7,7 +7,9 @@ dotenv.config();
 app.use(express.json()); 
 app.use(cors());
 const userRoutes = require('./routes/userRoutes');
+const productsRoutes=require("./routes/productRoutes");
 app.use('/api/users', userRoutes);
+app.use('/api/products',productsRoutes);
 app.use("/",(req,res)=>{
     res.send("server is running");
 })

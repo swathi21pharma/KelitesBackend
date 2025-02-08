@@ -10,7 +10,7 @@ const createUser = async ({ id,name, email, phone, password }) => {
     [id,name, email, phone, hashedPassword]
   );
 
-  return result.insertId;
+  return result;
 };
 
 const getUserByEmail = async (email) => {
