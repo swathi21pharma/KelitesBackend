@@ -8,8 +8,13 @@ app.use(express.json());
 app.use(cors());
 const userRoutes = require('./routes/userRoutes');
 const productsRoutes=require("./routes/productRoutes");
+const wishlistRoutes=require("./routes/wishlistRoutes");
+const addtocartRoutes=require("./routes/cartRoutes");
+
 app.use('/api/users', userRoutes);
 app.use('/api/products',productsRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/addtocard",addtocartRoutes);
 app.use("/",(req,res)=>{
     res.send("server is running");
 })

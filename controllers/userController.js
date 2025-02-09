@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const userModel = require('../models/userModel');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { log } = require('console');
 let verificationTokens = {}; 
 
 const transporter = nodemailer.createTransport({
@@ -89,14 +90,20 @@ const verificatinResult= (req, res) => {
 
 const registerUser = async (req, res) => {
   try {
-    const { id,name, email, phone, password } = req.body;
+    const { name, email, phone, password ,isgauth} = req.body;
 
     const existingUser = await userModel.getUserByEmail(email);
+    
     if (existingUser) {
-      return res.status(400).json({ error: 'Email already registered' });
+      if(isgauth){
+        return res.status(200).json({ data:existingUser.id, error: 'Email already registered' });
+      }else{
+        return res.status(400).json({ error: 'Email already registered' });
+
+      } 
     }
 
-    const userId = await userModel.createUser({ id,name, email, phone, password });
+    const userId = await userModel.createUser({ name, email, phone, password });
     res.status(201).json({ message: 'User registered successfully', userId });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -109,14 +116,20 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+ 
+  
     const user = await userModel.getUserByEmail(email);
-
+    console.log(user);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!user.password) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+     }
+
+     const isPasswordValid = await bcrypt.compare(password, user.password);
+
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }

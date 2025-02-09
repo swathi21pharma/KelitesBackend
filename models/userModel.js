@@ -1,13 +1,16 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
 
-const createUser = async ({ id,name, email, phone, password }) => {
-  console.log(id,name,email,phone,password);
-  
-  const hashedPassword = await bcrypt.hash(password, 10);
+const createUser = async ({ name, email, phone=null, password=null}) => {
+  console.log(name,email,phone,password);
+  const createdAt = new Date();
+  let hashedPassword = null;
+  if (password) {
+    hashedPassword = await bcrypt.hash(password, 10); // Only hash if password is provided
+  }
   const [result] = await db.query(
-    'INSERT INTO users (id,name, email, phone, password) VALUES (?,?, ?, ?, ?)',
-    [id,name, email, phone, hashedPassword]
+    'INSERT INTO users (name, email, phone, password,createdAt) VALUES (?,?, ?, ?, ?)',
+    [name, email, phone, hashedPassword,createdAt]
   );
 
   return result;
