@@ -18,8 +18,6 @@ const transporter = nodemailer.createTransport({
 const sendVerification = async (req, res) => {
   const { name, email } = req.body;
 
-    console.log(name,email);
-
   // Generate a unique verification token
   const token = crypto.randomBytes(32).toString('hex');
   const expirationTime = Date.now() + 2 * 60 * 1000; // 2 minutes
@@ -88,53 +86,65 @@ const verificatinResult= (req, res) => {
 };
 
 
+
 const registerUser = async (req, res) => {
   try {
-    const { name, email, phone, password ,isgauth} = req.body;
-
-    const existingUser = await userModel.getUserByEmail(email);
+    const { name, email, phone, password, isgauth } = req.body;
     
+    const existingUser = await userModel.getUserByEmail(email);
+   
     if (existingUser) {
-      if(isgauth){
-        return res.status(200).json({ data:existingUser.id, error: 'Email already registered' });
-      }else{
-        return res.status(400).json({ error: 'Email already registered' });
-
-      } 
+      const userId1=existingUser.id;
+      const email1=existingUser.email
+      const token1 = jwt.sign({ id: userId1, email:email1 }, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRY,
+      });
+      return res.status(isgauth ? 200 : 400).json({
+        data: existingUser.id,
+        error: 'Email already registered',
+        token:isgauth ?token1:null
+      });
     }
 
-    const userId = await userModel.createUser({ name, email, phone, password });
-    res.status(201).json({ message: 'User registered successfully', userId });
+    const hashedPassword = password ? password : null;
+    const userId = await userModel.createUser({ name, email, phone, password: hashedPassword });
+    
+    // Generate JWT Token for verification or session
+    const token = jwt.sign(
+      { id:userId.insertId, email },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRY }
+    );
+
+    res.status(201).json({
+      message: 'User registered successfully',
+      token:  token
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-
-
-
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
- 
-  
     const user = await userModel.getUserByEmail(email);
-    console.log(user);
+
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     if (!user.password) {
       return res.status(401).json({ error: 'Invalid credentials' });
-     }
+    }
 
-     const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
+    
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Generate JWT Token
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRY,
     });
@@ -145,4 +155,78 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser,sendVerification,verificationToken,verificatinResult};
+
+const validateToken = (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token not provided' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid or expired token' });
+    }
+    res.status(200).json({ user });
+  });
+};
+const userdetails= async (req, res) => {
+  try {
+    const userId = req.user.id;
+   
+    const user = await userModel.getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json({
+      id: user[0].id,
+      name: user[0].name,
+      email: user[0].email,
+      phone: user[0].phone,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+const updateUser= async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { name, email, phone } = req.body;
+
+    // Fetch the existing user details
+    const existingUser = await userModel.getUserById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prepare updated fields
+    const updatedFields = {
+      name: name || existingUser.name,
+      email: email || existingUser.email,
+      phone: phone || existingUser.phone,
+    };
+
+  
+    // Update the user in the database
+    const updatedUser = await userModel.updateUserById(userId, updatedFields);
+
+    res.status(200).json({
+      message: 'User details updated successfully',
+      user: {
+        id: updatedUser[0].id,
+        name: updatedUser[0].name,
+        email: updatedUser[0].email,
+        phone: updatedUser[0].phone,
+        createdAt: updatedUser[0].createdAt,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+module.exports = { registerUser, loginUser,sendVerification,verificationToken,verificatinResult,validateToken,userdetails,updateUser};

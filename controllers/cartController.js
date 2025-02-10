@@ -13,6 +13,8 @@ const addToCart = async (req, res) => {
     const cartId = await Cart.addToCart(userId, productId, quantity);
     res.status(201).json({ message: 'Added to cart', cartId });
   } catch (error) {
+    console.log(error);
+    
     res.status(500).json({ error: 'Server error' });
   }
 };

@@ -3,10 +3,10 @@ const db = require('../config/db'); // Adjust the path to your database configur
 
 const Cart = {
   // Add a product to the cart
-  addToCart: async (userId, productId, quantity) => {
+  addToCart: async (userId, productId) => {
     const [result] = await db.execute(
-      'INSERT INTO Cart (user_id, product_id, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + ?',
-      [userId, productId, quantity, quantity]
+      'INSERT INTO Cart (user_id, product_id) VALUES (?, ?)',
+      [userId, productId]
     );
     return result.insertId;
   },
@@ -14,10 +14,9 @@ const Cart = {
   // Get all cart items for a user
   getCartByUserId: async (userId) => {
     const [rows] = await db.execute(
-      `SELECT c.id, p.id AS product_id, p.name, p.price, p.image, c.quantity
-       FROM Cart c
-       JOIN Products p ON c.product_id = p.id
-       WHERE c.user_id = ?`,
+      `SELECT *
+       FROM Cart 
+       WHERE user_id = ?`,
       [userId]
     );
     return rows;

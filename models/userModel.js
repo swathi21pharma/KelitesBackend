@@ -2,7 +2,6 @@ const db = require('../config/db');
 const bcrypt = require('bcrypt');
 
 const createUser = async ({ name, email, phone=null, password=null}) => {
-  console.log(name,email,phone,password);
   const createdAt = new Date();
   let hashedPassword = null;
   if (password) {
@@ -20,5 +19,20 @@ const getUserByEmail = async (email) => {
   const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
   return rows[0];
 };
+const updateUserById = async (id, updatedFields) => {
 
-module.exports = { createUser, getUserByEmail };
+  const result = await db.query(
+    'UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?',
+    [updatedFields.name, updatedFields.email, updatedFields.phone, id]
+  );
+
+  const updatedUser = await getUserById(id);
+  return updatedUser;
+};
+
+const getUserById = async (id) => {
+  const result = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+  return result[0];
+};
+
+module.exports = { createUser, getUserByEmail,updateUserById,getUserById};

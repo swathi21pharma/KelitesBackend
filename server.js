@@ -14,7 +14,7 @@ const addtocartRoutes=require("./routes/cartRoutes");
 app.use('/api/users', userRoutes);
 app.use('/api/products',productsRoutes);
 app.use("/api/wishlist", wishlistRoutes);
-app.use("/api/addtocard",addtocartRoutes);
+app.use("/api/addtocart",addtocartRoutes);
 app.use("/",(req,res)=>{
     res.send("server is running");
 })
