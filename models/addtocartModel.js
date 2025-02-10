@@ -4,8 +4,10 @@ const db = require('../config/db'); // Adjust the path to your database configur
 const Cart = {
   // Add a product to the cart
   addToCart: async (userId, productId) => {
+    console.log(userId,productId);
+    
     const [result] = await db.execute(
-      'INSERT INTO Cart (user_id, product_id) VALUES (?, ?)',
+      'INSERT INTO cart (user_id, product_id) VALUES (?, ?)',
       [userId, productId]
     );
     return result.insertId;
@@ -15,7 +17,7 @@ const Cart = {
   getCartByUserId: async (userId) => {
     const [rows] = await db.execute(
       `SELECT *
-       FROM Cart 
+       FROM cart 
        WHERE user_id = ?`,
       [userId]
     );
@@ -25,7 +27,7 @@ const Cart = {
   // Remove a product from the cart
   removeFromCart: async (userId, productId) => {
     const [result] = await db.execute(
-      'DELETE FROM Cart WHERE user_id = ? AND product_id = ?',
+      'DELETE FROM cart WHERE user_id = ? AND product_id = ?',
       [userId, productId]
     );
     return result.affectedRows > 0;
@@ -34,7 +36,7 @@ const Cart = {
   // Update product quantity in the cart
   updateCartQuantity: async (userId, productId, quantity) => {
     const [result] = await db.execute(
-      'UPDATE Cart SET quantity = ? WHERE user_id = ? AND product_id = ?',
+      'UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?',
       [quantity, userId, productId]
     );
     return result.affectedRows > 0;
