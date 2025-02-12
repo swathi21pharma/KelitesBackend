@@ -1,5 +1,6 @@
 const mysql = require('mysql2');
-
+ console.log(process.env.RAILWAY_HOST);
+ 
 const pool = mysql.createPool({
   host: process.env.RAILWAY_HOST,
   port:  process.env.RAILWAY_PORT,

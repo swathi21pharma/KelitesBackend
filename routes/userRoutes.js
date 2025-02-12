@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, loginUser,sendVerification,verificatinResult,verificationToken,validateToken,userdetails,updateUser} = require('../controllers/userController');
+const { registerUser, loginUser,sendVerification,verifyCode,validateToken,userdetails,updateUser} = require('../controllers/userController');
 const authenticateToken = require('../middlewares/authMiddleware');
 
 const router = express.Router();
@@ -7,7 +7,7 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post("/sendverification",sendVerification);
-router.post("/poll-verification",verificatinResult);
+router.post("/poll-verification",verifyCode);
 router.get("/verify/:token",verificationToken);
 router.post("/validate-token",validateToken);
 

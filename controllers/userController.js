@@ -7,37 +7,130 @@ const { log } = require('console');
 let verificationTokens = {}; 
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.mailgun.org",
-  port: 587,
+  service: "gmail",
   auth: {
-    user: "postmaster@sandboxaa9292392f2b4f01a7eecde046fcc283.mailgun.org", // replace with your Mailgun username
-    pass: "b94bafa63b5b593fa06dc0dbe9134f8e-667818f5-60b224e6", // replace with your Mailgun password
+    user: "smanoraj24@gmail.com", // replace with your Mailgun username
+    pass: "zdvnrtypwkgeuvsj", // replace with your Mailgun password
   },
 });
+const generateVerificationCode = () => {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    const randomIndex = crypto.randomInt(0, characters.length);
+    code += characters[randomIndex];
+  }
+  return code;
+};
 
+const token = generateVerificationCode();
 const sendVerification = async (req, res) => {
   const { name, email } = req.body;
 
   // Generate a unique verification token
-  const token = crypto.randomBytes(32).toString('hex');
+  const token = generateVerificationCode();
   const expirationTime = Date.now() + 2 * 60 * 1000; // 2 minutes
 
   // Store token with expiration
   verificationTokens[token] = { email, expirationTime };
-
-  const verificationLink = `${'http://localhost:5000'}/verify/${token}`;
-
   // Send verification email
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: "smanoraj24@gmail.com",
       to: email,
       subject: 'Verify Your Email',
-      html: `
-        <h3>Hi ${name},</h3>
-        <p>Please click the link below to verify your email:</p>
-        <a href="${verificationLink}">Verify Email</a>
-        <p>This link will expire in 2 minutes.</p>
+      html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seelaikaari Saree - Email Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .email-header {
+            background-color: #6a1b9a; /* Purple color for brand identity */
+            color: #ffffff;
+            padding: 25px;
+            text-align: center;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: bold;
+        }
+        .email-body {
+            padding: 25px;
+            color: #333333;
+            text-align: center;
+        }
+        .email-body h3 {
+            margin-top: 0;
+            font-size: 22px;
+            color: #6a1b9a; /* Purple color for consistency */
+        }
+        .email-body p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        .email-body p.verify-button {
+            display: inline-block;
+            margin: 25px 0;
+            padding: 12px 30px;
+            background-color: #ff4081; /* Pink color for the button */
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .email-body p.verify-button:hover {
+            background-color: #e91e63; /* Darker pink on hover */
+        }
+        .email-footer {
+            background-color: #f4f4f4;
+            padding: 15px;
+            text-align: center;
+            font-size: 14px;
+            color: #666666;
+        }
+        .email-footer p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>Welcome to Seelaikaari Saree!</h1>
+        </div>
+        <div class="email-body">
+            <h3>Hi ${name ||"there!"},</h3>
+            <p>Thank you for creating an account with Seelaikaari Saree. To get started, please verify your email address by clicking the button below:</p>
+            <a href="" class="verify-button">${token}</a>
+            <p>This link will expire in <strong>2 minutes</strong>, so please verify your email soon.</p>
+        </div>
+        <div class="email-footer">
+            <p>Seelaikaari Saree - Bringing Tradition to Your Doorstep</p>
+            <p>Contact us: support@seelaikaarisaree.com</p>
+        </div>
+    </div>
+</body>
+</html>
       `,
     });
 
@@ -50,40 +143,27 @@ const sendVerification = async (req, res) => {
 
 // Verify token and complete registration
 
-const verificationToken=async (req, res) => {
-  const { token } = req.params;
+const verifyCode = (req, res) => {
+  const { email, code } = req.body;
+  const storedToken = verificationTokens[email];
 
-  if (!verificationTokens[token]) {
-    return res.status(400).send('Invalid or expired token.');
+  if (!storedToken) {
+    return res.status(400).json({ error: "No verification code found for this email." });
   }
 
-  const { email, expirationTime } = verificationTokens[token];
-
-  if (Date.now() > expirationTime) {
-    delete verificationTokens[token];
-    return res.status(400).send('Verification link expired.');
+  if (Date.now() > storedToken.expirationTime) {
+    delete verificationTokens[email];
+    return res.status(400).json({ error: "Verification code expired. Please request a new one." });
   }
 
-  // Complete user verification
-  delete verificationTokens[token];
-  res.status(200).send('Email verified successfully!');
+  if (storedToken.token !== code) {
+    return res.status(400).json({ error: "Invalid verification code." });
+  }
+
+  delete verificationTokens[email]; // Remove after successful verification
+  res.status(200).json({ message: "Email verified successfully!" });
 };
 
-// Long-polling for verification result
-const verificatinResult= (req, res) => {
-  const { token } = req.body;
-
-  if (!verificationTokens[token]) {
-    return res.status(400).json({ verified: false, message: 'Invalid or expired token.' });
-  }
-
-  const pollInterval = setInterval(() => {
-    if (!verificationTokens[token]) {
-      clearInterval(pollInterval);
-      res.status(200).json({ verified: true, message: 'Email verified successfully!' });
-    }
-  }, 1000); 
-};
 
 
 
@@ -229,4 +309,4 @@ const updateUser= async (req, res) => {
   }
 }
 
-module.exports = { registerUser, loginUser,sendVerification,verificationToken,verificatinResult,validateToken,userdetails,updateUser};
+module.exports = { registerUser, loginUser,sendVerification,verifyCode,validateToken,userdetails,updateUser};
