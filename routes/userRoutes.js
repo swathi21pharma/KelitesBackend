@@ -7,8 +7,7 @@ const router = express.Router();
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post("/sendverification",sendVerification);
-router.post("/poll-verification",verifyCode);
-router.get("/verify/:token",verificationToken);
+router.post("/verify",verifyCode);
 router.post("/validate-token",validateToken);
 
 router.get('/profile', authenticateToken, (req, res) => {

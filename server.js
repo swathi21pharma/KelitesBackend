@@ -10,11 +10,15 @@ const userRoutes = require('./routes/userRoutes');
 const productsRoutes=require("./routes/productRoutes");
 const wishlistRoutes=require("./routes/wishlistRoutes");
 const addtocartRoutes=require("./routes/cartRoutes");
+const orderRoutes=require("./routes/orderRoutes");
+
 
 app.use('/api/users', userRoutes);
 app.use('/api/products',productsRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/addtocart",addtocartRoutes);
+app.use("/api/order", orderRoutes);
+
 app.use("/",(req,res)=>{
     res.send("server is running");
 })
