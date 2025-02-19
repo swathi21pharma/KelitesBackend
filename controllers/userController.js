@@ -4,6 +4,8 @@ const userModel = require('../models/userModel');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { log } = require('console');
+const db = require('../config/db');
+const { use } = require('../routes/userRoutes');
 let verificationTokens = {}; 
 
 const transporter = nodemailer.createTransport({
@@ -26,13 +28,20 @@ const generateVerificationCode = () => {
 const sendVerification = async (req, res) => {
   const { name, email } = req.body;
 
+
+  const existingUser = await userModel.getUserByEmail(email);
+
+  if(existingUser){
+    return res.status(400).json({
+      message: 'Email already registered'
+    });
+  }
   // Generate a unique verification token
   const token = generateVerificationCode();
   const expirationTime = Date.now() + 2 * 60 * 1000; // 2 minutes
 
   // Store token with expiration
   verificationTokens[token] = { email, expirationTime };
-console.log(verificationTokens);
 
   // Send verification email
   try {
@@ -148,7 +157,6 @@ console.log(verificationTokens);
 const verifyCode = (req, res) => {
   const { email, code } = req.body;
   const storedToken = verificationTokens[code];
-  console.log(email,code,verificationTokens);
   
   if (!storedToken) {
     return res.status(400).json({ error: "No verification code found for this email." });
@@ -312,4 +320,153 @@ const updateUser= async (req, res) => {
   }
 }
 
-module.exports = { registerUser, loginUser,sendVerification,verifyCode,validateToken,userdetails,updateUser};
+const forgotPasswordLink =async (req,res)=>{
+  const { email } = req.body;
+  console.log(email);
+  
+const existingUser = await userModel.getUserByEmail(email);
+
+if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiry = new Date(Date.now() + 3600000); // Token valid for 1 hour
+
+    await db.query("UPDATE users SET reset_token = ?, token_exp = ? WHERE email = ?", [token, expiry, email]);
+
+    const resetLink = `${process.env.FrontEnd}reset-password?token=${token}`;
+
+
+    await transporter.sendMail({
+        from:  process.env.EMAIL_USER,
+        to: email,
+        subject: "Reset Your Password",
+        html: `<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Password Reset - Seelaikaari Saree</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                }
+                .email-container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background: #ffffff;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                }
+                .logo {
+                    text-align: center;
+                    padding-bottom: 10px;
+                }
+                .logo img {
+                    width: 150px;
+                }
+                .email-content {
+                    text-align: center;
+                }
+                h2 {
+                    color: #333;
+                }
+                p {
+                    font-size: 16px;
+                    color: #555;
+                    line-height: 1.6;
+                }
+                .reset-button {
+                    display: inline-block;
+                    padding: 12px 20px;
+                    font-size: 16px;
+                    color: #fff;
+                    background-color: #d81b60;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    margin-top: 20px;
+                }
+                .reset-button:hover {
+                    background-color: #b71850;
+                }
+                .footer {
+                    margin-top: 20px;
+                    text-align: center;
+                    font-size: 14px;
+                    color: #888;
+                }
+                .footer a {
+                    color: #d81b60;
+                    text-decoration: none;
+                }
+            </style>
+        </head>
+        <body>
+        
+        <div class="email-container">
+            <div class="logo">
+                <img src="https://yourwebsite.com/logo.png" alt="Seelaikaari Saree">
+            </div>
+            
+            <div class="email-content">
+                <h2>Password Reset Request</h2>
+                <p>Hi there,</p>
+                <p>We received a request to reset your password for your Seelaikaari Saree account. Click the button below to set a new password.</p>
+                <a href="${resetLink}" class="reset-button">Reset Password</a>
+                <p>If you didn’t request this, please ignore this email. This link will expire in 15 minutes for security reasons.</p>
+            </div>
+        
+            <div class="footer">
+                <p>Need help? Contact us at <a href="mailto:support@seelaikaarisaree.com">support@seelaikaarisaree.com</a></p>
+                <p>Seelaikaari Saree - Bringing Tradition to Your Doorstep</p>
+            </div>
+        </div>
+        
+        </body>
+        </html>
+        `,
+    });
+
+    res.status(200).json({ message: "Password reset link sent to your email" });
+}
+
+const resetPassword = async (req, res) => {
+  try {
+      const { token, newPassword } = req.body;
+
+      // Check if token exists in the database and is not expired
+      const [users] = await db.query("SELECT id FROM users WHERE reset_token = ? AND token_exp > NOW()", [token]);
+
+      if (users.length === 0) {
+          return res.status(400).json({ message: "Invalid or expired token" });
+      }
+
+      const userId = users[0].id; // Extract user ID
+
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update the user's password
+      const [result] = await db.execute(
+          "UPDATE users SET password = ?, reset_token = NULL, token_exp = NULL WHERE id = ?",
+          [hashedPassword, userId]
+      );
+
+      if (result.affectedRows === 0) {
+          return res.status(500).json({ message: "Password reset failed" });
+      }
+
+      res.json({ message: "Password reset successful" });
+  } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+module.exports = { registerUser, loginUser,sendVerification,verifyCode,validateToken,userdetails,updateUser,resetPassword,forgotPasswordLink};

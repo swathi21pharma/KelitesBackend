@@ -5,17 +5,13 @@ const Cart = require('../models/addtocartModel');
 const addToCart = async (req, res) => {
   try {
     const { userId, productId } = req.body;
-    console.log(userId,productId);
-    
-    if (!userId || !productId ) {
+    if (!userId || !productId) {
       return res.status(400).json({ error: 'User ID, Product ID, and quantity are required' });
     }
-
     const cartId = await Cart.addToCart(userId, productId);
     res.status(201).json({ message: 'Added to cart', cartId });
   } catch (error) {
     console.log(error);
-    
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -36,10 +32,6 @@ const getUserCart = async (req, res) => {
 const removeFromCart = async (req, res) => {
   try {
     const { userId, productId } = req.body;
-    console.log(req.body);
-    
-    console.log(userId,productId);
-    
     const removed = await Cart.removeFromCart(userId, productId);
     if (!removed) return res.status(404).json({ error: 'Item not found' });
 

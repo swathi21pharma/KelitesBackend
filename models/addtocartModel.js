@@ -4,8 +4,6 @@ const db = require('../config/db'); // Adjust the path to your database configur
 const Cart = {
   // Add a product to the cart
   addToCart: async (userId, productId) => {
-    console.log(userId,productId);
-    
     const [result] = await db.execute(
       'INSERT INTO cart (user_id, product_id) VALUES (?, ?)',
       [userId, productId]

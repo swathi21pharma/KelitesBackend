@@ -14,6 +14,8 @@ const razorpay = new Razorpay({
 const createRazorpayOrder = async (req, res) => {   
   try {
     const { amount } = req.body;
+    console.log(amount);
+    
     if (!amount) {
       return res.status(400).json({ success: false, message: "Amount is required!" });
     }
@@ -39,6 +41,9 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
       order_id, customer_name, email, phone, address, city,payment_id,signature, state, country, pincode, 
       payment_method, shipping_charges, total_amount, weight, order_items
     } = req.body;
+    console.log( order_id, customer_name, email, phone, address, city,payment_id,signature, state, country, pincode, 
+      payment_method, shipping_charges, total_amount, weight, order_items);
+    
     if (!order_id || !payment_id || !signature || order_items.length === 0) {
       return res.status(400).json({ success: false, message: "Missing required payment fields or cart is empty!" });
     }
@@ -205,10 +210,10 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
 
     // Send emails
      await transporter.sendMail(customerMailOptions);
-    console.log(`Email sent to customer: ${email}`);
+     console.log(`Email sent to customer: ${email}`);
 
      await transporter.sendMail(ownerMailOptions);
-    console.log("Email sent to store owner: seelaikaari123@gmail.com");
+     console.log("Email sent to store owner: seelaikaari123@gmail.com");
 
     res.status(201).json({ success: true, message: "Order stored, email sent to customer & owner!", order: newOrder });
   } catch (error) {
