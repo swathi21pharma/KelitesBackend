@@ -23,7 +23,7 @@ const createRazorpayOrder = async (req, res) => {
     const options = {
       amount: amount * 100, // Convert to paise
       currency: "INR",
-      receipt: `order_${Date.now()}`,
+      receipt: `receipt#1`,
     };
 
     const order = await razorpay.orders.create(options);
@@ -222,11 +222,6 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
   }
 };
 
-// Step 3: Get Razorpay Key for Frontend
-const getRazorpayKey = (req, res) => {
-  res.json({ key: process.env.RAZORPAY_KEY_ID });
-};
-
 
 const cancelOrder = async (req, res) => {
   try {
@@ -289,4 +284,4 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-module.exports = { createRazorpayOrder, verifyPaymentAndCreateOrder, getRazorpayKey,cancelOrder};
+module.exports = { createRazorpayOrder, verifyPaymentAndCreateOrder,cancelOrder};
