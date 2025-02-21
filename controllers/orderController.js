@@ -38,13 +38,13 @@ const createRazorpayOrder = async (req, res) => {
 const verifyPaymentAndCreateOrder = async (req, res) => {
   try {
     const {
-      order_id, customer_name, email, phone, address, city,payment_id,signature, state, country, pincode, 
-      payment_method, shipping_charges, total_amount, weight, order_items
+      order_id, userDetails,payment_id,signature,country="India",
+      payment_method="Prepaid", shipping_charges=10, totalAmount, weight="2", cartItems
     } = req.body;
-    console.log( order_id, customer_name, email, phone, address, city,payment_id,signature, state, country, pincode, 
-      payment_method, shipping_charges, total_amount, weight, order_items);
+    // console.log(order_id, userDetails.name, userDetails.email, userDetails.phone, userDetails.address1, userDetails.city,payment_id,signature, userDetails.state, country, userDetails.pincode, 
+    //   payment_method, shipping_charges, totalAmount, weight, cartItems);
     
-    if (!order_id || !payment_id || !signature || order_items.length === 0) {
+    if (!order_id || !payment_id || !signature || cartItems.length === 0) {
       return res.status(400).json({ success: false, message: "Missing required payment fields or cart is empty!" });
     }
 
@@ -62,32 +62,32 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
     // Set default values to handle missing or null fields
     const newOrder = {
       order_id: order_id || null,
-      customer_name: customer_name || null,
-      email: email || null,
-      phone: phone || null,
-      address: address || null,
-      city: city || null,
-      state: state || null,
+      customer_name: userDetails.name || null,
+      email: userDetails.email || null,
+      phone: userDetails.phone || null,
+      address: userDetails.address1 || null,
+      city: userDetails.city || null,
+      state: userDetails.state || null,
       payment_id:payment_id,
       signature:signature,
       country: country || 'India',  // Default to 'India'
-      pincode: pincode || null,
+      pincode: userDetails.pincode || null,
       payment_method: payment_method || 'Prepaid',
       shipping_charges: shipping_charges || 0,
-      total_amount: total_amount || 0,
+      total_amount: totalAmount || 0,
       weight: weight || 0.5,  // Default to 0.5 if weight is not provided
-      order_items
+      order_items:cartItems
     };
   const result = await orderModel.createOrder(newOrder);
 
-    // Insert order items into the order_items table
-    for (let item of order_items) {
+    // Insert order items into the cartItems table
+    for (let item of cartItems) {
       const orderItem = {
         order_id: result.insertId,   // The ID of the order we just created
-        product_id: item.product_id,  // From the request body
+        product_id: item.id,  // From the request body
         quantity: item.quantity || 1, // Default to 1 if quantity is not provided
         price: item.price || 0,       // Default to 0 if price is missing
-        total_amount: item.total_amount || 0
+        total_amount: parseInt(item.price)*parseInt(item.quantity) || 0
       };
        await orderModel.createOrderItem(orderItem);
     }
@@ -110,12 +110,12 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
 
     const customerMailOptions = {
       from: process.env.EMAIL_USER,
-      to: email,
+      to: userDetails.email,
       subject: "Order Confirmation from Akilesh Store",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px; background-color: #f9f9f9;">
           <div style="text-align: center; padding-bottom: 20px;">
-            <h2 style="color: #4CAF50;">Thank You for Your Order, ${customer_name}!</h2>
+            <h2 style="color: #4CAF50;">Thank You for Your Order, ${userDetails.name}!</h2>
             <p style="color: #555;">Your payment was successful, and your order has been placed.</p>
           </div>
     
@@ -130,7 +130,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
                 </tr>
               </thead>
               <tbody>
-                ${order_items.map(item => `
+                ${cartItems.map(item => `
                   <tr>
                     <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
                     <td style="padding: 10px; text-align: center; border-bottom: 1px solid #eee;">${item.quantity}</td>
@@ -141,7 +141,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
             </table>
     
             <div style="margin-top: 20px; text-align: right;">
-              <h3 style="color: #4CAF50;">Total Amount Paid: ₹${total_amount}</h3>
+              <h3 style="color: #4CAF50;">Total Amount Paid: ₹${totalAmount}</h3>
             </div>
           </div>
     
@@ -166,12 +166,12 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px; background-color: #f9f9f9;">
           <h2 style="color: #4CAF50; text-align: center;">New Order Received</h2>
           <p style="color: #555;">Hello,</p>
-          <p>A new order has been placed by <strong>${customer_name}</strong>.</p>
+          <p>A new order has been placed by <strong>${userDetails.name}</strong>.</p>
     
           <h3 style="color: #333;">Customer Details:</h3>
-          <p><strong>Name:</strong> ${customer_name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Phone:</strong> ${phone}</p>
+          <p><strong>Name:</strong> ${userDetails.name}</p>
+          <p><strong>Email:</strong> ${userDetails.email}</p>
+          <p><strong>Phone:</strong> ${userDetails.phone}</p>
     
           <h3 style="color: #333;">Order Summary:</h3>
           <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
@@ -183,7 +183,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
               </tr>
             </thead>
             <tbody>
-              ${order_items.map(item => `
+              ${cartItems.map(item => `
                 <tr>
                   <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
                   <td style="padding: 10px; text-align: center; border-bottom: 1px solid #eee;">${item.quantity}</td>
@@ -194,7 +194,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
           </table>
     
           <div style="margin-top: 20px; text-align: right;">
-            <h3 style="color: #4CAF50;">Total Amount Paid: ₹${total_amount}</h3>
+            <h3 style="color: #4CAF50;">Total Amount Paid: ₹${totalAmount}</h3>
           </div>
     
           <p style="margin-top: 20px; color: #555;">Please process the order accordingly.</p>
@@ -210,7 +210,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
 
     // Send emails
      await transporter.sendMail(customerMailOptions);
-     console.log(`Email sent to customer: ${email}`);
+     console.log(`Email sent to customer: ${userDetails.email}`);
 
      await transporter.sendMail(ownerMailOptions);
      console.log("Email sent to store owner: seelaikaari123@gmail.com");

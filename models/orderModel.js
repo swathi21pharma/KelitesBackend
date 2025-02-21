@@ -25,7 +25,6 @@ const createOrder = async (orderData) => {
 
   try {
     const [result] = await db.query(query, values);
-    console.log("Order created successfully:", result);
     return result; // Returns the result of the insert query
   } catch (err) {
     console.error("Error during order creation:", err);
@@ -91,8 +90,7 @@ const formatDate = (date) => {
 
 
 const createShipRocketOrder = async (order, token) => {
-  console.log(order);
-  
+
     try {
       const response = await axios.post(
         "https://apiv2.shiprocket.in/v1/external/orders/create/adhoc",
@@ -125,10 +123,10 @@ const createShipRocketOrder = async (order, token) => {
             "shipping_email": "",
             "shipping_phone": "",
             "order_items": order.order_items.map((item) => ({
-              name: item.product_name,
+              name: item.name,
               units: item.quantity,
-              sku:item.sku,
-              selling_price: item.price,
+              sku:item.sku || "TSHIRT001",
+              selling_price: parseInt(item.price),
               discount: item.discount || 0,
               tax: item.tax || 0,
               hsn: item.hsn || 0,
