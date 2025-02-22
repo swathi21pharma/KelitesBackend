@@ -24,7 +24,8 @@ async function getShipRocketToken() {
         // Store the token and set the expiration time (e.g., token valid for 1 hour)
         shiprocketToken = response.data.token;
         tokenExpiry = currentTime + 3600000; // 1 hour from the current time
-
+        console.log(shiprocketToken);
+        
         return shiprocketToken; // Return the new token
     } catch (error) {
         console.error("Error fetching ShipRocket token:", error);

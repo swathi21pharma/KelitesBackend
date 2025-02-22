@@ -39,11 +39,9 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
   try {
     const {
       order_id, userDetails,payment_id,signature,country="India",
-      payment_method="Prepaid", shipping_charges=10, totalAmount, weight="2", cartItems
+      payment_method="Prepaid", shipping_charges=10, totalAmount, weight="2", cartItems,user
     } = req.body;
-    // console.log(order_id, userDetails.name, userDetails.email, userDetails.phone, userDetails.address1, userDetails.city,payment_id,signature, userDetails.state, country, userDetails.pincode, 
-    //   payment_method, shipping_charges, totalAmount, weight, cartItems);
-    
+ 
     if (!order_id || !payment_id || !signature || cartItems.length === 0) {
       return res.status(400).json({ success: false, message: "Missing required payment fields or cart is empty!" });
     }
@@ -76,7 +74,8 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
       shipping_charges: shipping_charges || 0,
       total_amount: totalAmount || 0,
       weight: weight || 0.5,  // Default to 0.5 if weight is not provided
-      order_items:cartItems
+      order_items:cartItems,
+      user
     };
   const result = await orderModel.createOrder(newOrder);
 
@@ -283,5 +282,9 @@ const cancelOrder = async (req, res) => {
     res.status(500).json('Error while canceling order:', error);
   }
 };
+
+const getOrderByOrderId=async ()=>{
+
+}
 
 module.exports = { createRazorpayOrder, verifyPaymentAndCreateOrder,cancelOrder};

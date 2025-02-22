@@ -5,7 +5,7 @@ const createOrder = async (orderData) => {
   const {
     order_id, customer_name, email, phone, address, city, state, payment_id, signature, country, pincode,
     payment_method, shipping_charges, total_amount, weight,
-    shipment_id = null, awb_code = null, courier_name = null, order_status = 'pending'
+    shipment_id = null, awb_code = null, courier_name = null, order_status = 'pending',user
   } = orderData;
 
  
@@ -13,14 +13,14 @@ const createOrder = async (orderData) => {
     INSERT INTO orders (
       order_id, customer_name, email, phone, address, city, state, payment_id, signature,country, pincode, 
       payment_method, shipping_charges, total_amount, weight, 
-      shipment_id, awb_code, courier_name, order_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?,?,?, ?, NOW(), NOW())
+      shipment_id, awb_code, courier_name, order_status, created_at, updated_at,user_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?,?,?, ?, NOW(), NOW(),?)
   `;
 
   const values = [
     order_id, customer_name, email, phone, address, city, state, payment_id, signature,country, pincode,
     payment_method, shipping_charges, total_amount, weight, 
-    shipment_id, awb_code, courier_name, order_status
+    shipment_id, awb_code, courier_name, order_status,user
   ];
 
   try {
@@ -52,7 +52,7 @@ const updateOrder = async (orderId, updateFields) => {
   const {
     shipment_id, awb_code, courier_name, order_status
   } = updateFields;
-
+  
   try {
     const [result] = await db.query(
       `UPDATE orders SET shipment_id = ?, awb_code = ?, courier_name = ?, order_status = ? 
@@ -122,10 +122,10 @@ const createShipRocketOrder = async (order, token) => {
             "shipping_state": "",
             "shipping_email": "",
             "shipping_phone": "",
-            "order_items": order.order_items.map((item) => ({
+            "order_items": order.order_items.map((item,index) => ({
               name: item.name,
               units: item.quantity,
-              sku:item.sku || "TSHIRT001",
+              sku:item.sku || `TSHIRT002${index}`,
               selling_price: parseInt(item.price),
               discount: item.discount || 0,
               tax: item.tax || 0,
@@ -141,8 +141,6 @@ const createShipRocketOrder = async (order, token) => {
             "breadth":  order.breadth || 5,
             "height":  order.height || 5,
             "weight":  order.weight || 0.5
-          
-
         },
         {
           headers: {
