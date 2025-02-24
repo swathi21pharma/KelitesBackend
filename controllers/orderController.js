@@ -21,7 +21,7 @@ const createRazorpayOrder = async (req, res) => {
     }
 
     const options = {
-      amount: amount * 100, // Convert to paise
+      amount: amount * 100, 
       currency: "INR",
       receipt: `receipt#1`,
     };
@@ -34,7 +34,7 @@ const createRazorpayOrder = async (req, res) => {
   }
 };
 
-// Step 2: Verify Payment & Store Checkout Details
+
 const verifyPaymentAndCreateOrder = async (req, res) => {
   try {
     const {
@@ -57,7 +57,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
     // }
 
  
-    // Set default values to handle missing or null fields
+
     const newOrder = {
       order_id: order_id || null,
       customer_name: userDetails.name || null,
@@ -129,7 +129,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
                 </tr>
               </thead>
               <tbody>
-                ${cartItems.map(item => `
+                ${cartItems.map(item =>`
                   <tr>
                     <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
                     <td style="padding: 10px; text-align: center; border-bottom: 1px solid #eee;">${item.quantity}</td>
@@ -245,7 +245,7 @@ const cancelOrder = async (req, res) => {
     let refundAmount = totalAmount;
 
     // Refund calculation based on order status
-    if (orderStatus === 'Picked Up') {
+    if (orderStatus !== 'Pickup Scheduled') {
       // If the order has been picked up, deduct the shipping and packaging charges
       refundAmount = totalAmount - shippingCharges - packageCharges;
       console.log(`Refund after deduction: ${refundAmount}`);
@@ -255,7 +255,7 @@ const cancelOrder = async (req, res) => {
     }
 
     // API URL for canceling the order
-    const apiUrl = `https://apiv2.shiprocket.in/v1/external/cancel/order`;
+    const apiUrl = `https://apiv2.shiprocket.in/v1/external/cancel/order`;  
 
     // The request body with order ID and refund amount
     const requestBody = {
@@ -283,8 +283,21 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-const getOrderByOrderId=async ()=>{
+const getOrdersdetails=async (req, res) => {
+  const { userId }=req.body;
+
+  try{
+    const result= await orderModel.getOrderByUserId(userId)
+    
+    if(result){
+      res.status(200).json({data:result})
+    }else{
+      res.status(400).json({data:result,err:"no orders found!"})
+    }
+  }catch(err){
+    res.status(500).json({data:result,err:"error fetching data!"})
+  }
 
 }
 
-module.exports = { createRazorpayOrder, verifyPaymentAndCreateOrder,cancelOrder};
+module.exports = { createRazorpayOrder, getOrdersdetails,verifyPaymentAndCreateOrder,cancelOrder};

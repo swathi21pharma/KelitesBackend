@@ -67,10 +67,25 @@ const updateOrder = async (orderId, updateFields) => {
 };
 
 // Get order by order_id (used for tracking)
-const getOrderByOrderId = async (orderId) => {
+const getOrderByUserId = async (userId) => {
   try {
-    const [rows] = await db.query('SELECT * FROM orders WHERE order_id = ?', [orderId]);
-    return rows[0];
+    const [rows] = await db.query(`
+      SELECT 
+        orders.order_id, orders.total_amount,
+        orders.order_status,orders.shipment_id,orders.payment_id,orders.address,
+        products.name
+      FROM 
+        orders
+      INNER JOIN 
+        order_items ON orders.id = order_items.order_id
+      INNER JOIN  
+        products ON order_items.product_id = products.id
+      WHERE 
+        orders.user_id = ?
+    `, [userId]);
+    console.log(rows);
+    
+    return rows;
   } catch (err) {
     console.error("Error fetching order:", err);
     throw err;
@@ -172,4 +187,4 @@ const createShipRocketOrder = async (order, token) => {
     }
   };
   
-module.exports = { createOrder, updateOrder, getOrderByOrderId,createShipRocketOrder,saveTracking,createOrderItem};
+module.exports = { createOrder, updateOrder, getOrderByUserId,createShipRocketOrder,saveTracking,createOrderItem};
