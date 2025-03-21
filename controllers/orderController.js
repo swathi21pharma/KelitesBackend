@@ -41,6 +41,8 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
       order_id, userDetails,payment_id,signature,country="India",
       payment_method="Prepaid", shipping_charges=10, totalAmount, weight="2", cartItems,user
     } = req.body;
+ console.log(order_id, userDetails,payment_id,signature,country,
+  payment_method, shipping_charges, totalAmount, weight, cartItems,user);
  
     if (!order_id || !payment_id || !signature || cartItems.length === 0) {
       return res.status(400).json({ success: false, message: "Missing required payment fields or cart is empty!" });
@@ -52,11 +54,10 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
       .update(order_id + "|" + payment_id)
       .digest("hex");
 
-    // if (expectedSignature !== signature) {
-    //   return res.status(400).json({ success: false, message: "Invalid payment signature!" });
-    // }
+    if (expectedSignature !== signature) {
+      return res.status(400).json({ success: false, message: "Invalid payment signature!" });
+    }
 
- 
 
     const newOrder = {
       order_id: order_id || null,
@@ -77,7 +78,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
       order_items:cartItems,
       user
     };
-  const result = await orderModel.createOrder(newOrder);
+   const result = await orderModel.createOrder(newOrder);
 
     // Insert order items into the cartItems table
     for (let item of cartItems) {
@@ -88,14 +89,14 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
         price: item.price || 0,       // Default to 0 if price is missing
         total_amount: parseInt(item.price)*parseInt(item.quantity) || 0
       };
-       await orderModel.createOrderItem(orderItem);
+      //  await orderModel.createOrderItem(orderItem);
     }
 
     // Get ShipRocket API token
-    const token = await getShipRocketToken();
+    // const token = await getShipRocketToken();
 
     // Create the order in ShipRocket
-     const shipmentID = await orderModel.createShipRocketOrder(newOrder, token);
+    //  const shipmentID = await orderModel.createShipRocketOrder(newOrder, token);
 
     // Nodemailer setup
 
@@ -207,12 +208,12 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
     };
     
 
-    // Send emails
-     await transporter.sendMail(customerMailOptions);
-     console.log(`Email sent to customer: ${userDetails.email}`);
+    // // Send emails
+    //  await transporter.sendMail(customerMailOptions);
+    //  console.log(`Email sent to customer: ${userDetails.email}`);
 
-     await transporter.sendMail(ownerMailOptions);
-     console.log("Email sent to store owner: seelaikaari123@gmail.com");
+    //  await transporter.sendMail(ownerMailOptions);
+    //  console.log("Email sent to store owner: seelaikaari123@gmail.com");
 
     res.status(201).json({ success: true, message: "Order stored, email sent to customer & owner!", order: newOrder });
   } catch (error) {

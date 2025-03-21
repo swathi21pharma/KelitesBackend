@@ -182,11 +182,14 @@ const registerUser = async (req, res) => {
   try {
     const { name, email, phone, password, isgauth } = req.body;
     
+    
     const existingUser = await userModel.getUserByEmail(email);
-   
+     
+     
     if (existingUser) {
       const userId1=existingUser.id;
       const email1=existingUser.email
+
       const token1 = jwt.sign({ id: userId1, email:email1 }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRY,
       });
@@ -202,7 +205,7 @@ const registerUser = async (req, res) => {
     
     // Generate JWT Token for verification or session
     const token = jwt.sign(
-      { id:userId.insertId, email },
+      { id:userId.id, email },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRY }
     );
@@ -322,18 +325,19 @@ const updateUser= async (req, res) => {
 
 const forgotPasswordLink =async (req,res)=>{
   const { email } = req.body;
-  console.log(email);
+  
   
 const existingUser = await userModel.getUserByEmail(email);
-
+console.log(existingUser);
 if (!existingUser) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+
     const token = crypto.randomBytes(32).toString("hex");
     const expiry = new Date(Date.now() + 3600000); // Token valid for 1 hour
 
-    await db.query("UPDATE users SET reset_token = ?, token_exp = ? WHERE email = ?", [token, expiry, email]);
+    await db.query("UPDATE seelaikaari_users SET reset_token = $1, token_exp = $2 WHERE email = $3", [token, expiry, email]);
 
     const resetLink = `${process.env.FrontEnd}reset-password?token=${token}`;
 
@@ -440,7 +444,7 @@ const resetPassword = async (req, res) => {
       const { token, newPassword } = req.body;
 
       // Check if token exists in the database and is not expired
-      const [users] = await db.query("SELECT id FROM users WHERE reset_token = ? AND token_exp > NOW()", [token]);
+      const [users] = await db.query("SELECT id FROM seelaikaari_users WHERE reset_token = $1 AND token_exp > NOW()", [token]);
 
       if (users.length === 0) {
           return res.status(400).json({ message: "Invalid or expired token" });
@@ -453,7 +457,7 @@ const resetPassword = async (req, res) => {
 
       // Update the user's password
       const [result] = await db.execute(
-          "UPDATE users SET password = ?, reset_token = NULL, token_exp = NULL WHERE id = ?",
+          "UPDATE seelaikaari_users SET password = $1, reset_token = NULL, token_exp = NULL WHERE id = $2",
           [hashedPassword, userId]
       );
 
