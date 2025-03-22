@@ -54,7 +54,7 @@ const sendVerification = async (req, res) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seelaikaari Saree - Email Verification</title>
+    <title>Kelites Saree - Email Verification</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -126,18 +126,18 @@ const sendVerification = async (req, res) => {
 <body>
     <div class="email-container">
         <div class="email-header">
-            <h1>Welcome to Seelaikaari Saree!</h1>
+            <h1>Welcome to Kelites Products!</h1>
         </div>
         <div class="email-body">
            <h3>Hi ${name || "there!"},</h3>
-   <p>Thank you for creating an account with Seelaikaari Saree. To get started, please verify your email address using the verification code below:</p>  
+   <p>Thank you for creating an account with Kelites Products. To get started, please verify your email address using the verification code below:</p>  
    <h5 class="verify-button">${token}</h3>
    <p>Enter this code on the website to complete your verification.</p>
             <p>This link will expire in <strong>2 minutes</strong>, so please verify your email soon.</p>
         </div>
         <div class="email-footer">
-            <p>Seelaikaari Saree - Bringing Tradition to Your Doorstep</p>
-            <p>Contact us: support@seelaikaarisaree.com</p>
+            <p>Kelites Products - Bringing Tradition to Your Doorstep</p>
+            <p>Contact us: swathi21pharma@gmail.com</p>
         </div>
     </div>
 </body>
@@ -159,7 +159,7 @@ const verifyCode = (req, res) => {
   const storedToken = verificationTokens[code];
   
   if (!storedToken) {
-    return res.status(400).json({ error: "No verification code found for this email." });
+    return res.status(400).json({ error: "Invalid verification code." });
   }
 
   if (Date.now() > storedToken.expirationTime) {
@@ -337,7 +337,7 @@ if (!existingUser) {
     const token = crypto.randomBytes(32).toString("hex");
     const expiry = new Date(Date.now() + 3600000); // Token valid for 1 hour
 
-    await db.query("UPDATE seelaikaari_users SET reset_token = $1, token_exp = $2 WHERE email = $3", [token, expiry, email]);
+    await db.query("UPDATE elite_products.users SET reset_token = $1, token_exp = $2 WHERE email = $3", [token, expiry, email]);
 
     const resetLink = `${process.env.FrontEnd}reset-password?token=${token}`;
 
@@ -351,7 +351,7 @@ if (!existingUser) {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Password Reset - Seelaikaari Saree</title>
+            <title>Password Reset - Kelites Products</title>
             <style>
                 body {
                     font-family: Arial, sans-serif;
@@ -414,20 +414,20 @@ if (!existingUser) {
         
         <div class="email-container">
             <div class="logo">
-                <img src="https://yourwebsite.com/logo.png" alt="Seelaikaari Saree">
+                <img src="https://yourwebsite.com/logo.png" alt="Kelites Products">
             </div>
             
             <div class="email-content">
                 <h2>Password Reset Request</h2>
                 <p>Hi there,</p>
-                <p>We received a request to reset your password for your Seelaikaari Saree account. Click the button below to set a new password.</p>
+                <p>We received a request to reset your password for your Kelites Products account. Click the button below to set a new password.</p>
                 <a href="${resetLink}" class="reset-button">Reset Password</a>
                 <p>If you didn’t request this, please ignore this email. This link will expire in 15 minutes for security reasons.</p>
             </div>
         
             <div class="footer">
-                <p>Need help? Contact us at <a href="mailto:support@seelaikaarisaree.com">support@seelaikaarisaree.com</a></p>
-                <p>Seelaikaari Saree - Bringing Tradition to Your Doorstep</p>
+                <p>Need help? Contact us at <a href="mailto:swathi21pharma@gmail.com">swathi21pharma@gmail.com</a></p>
+                <p>Kelites Products - Bringing Tradition to Your Doorstep</p>
             </div>
         </div>
         
@@ -444,23 +444,27 @@ const resetPassword = async (req, res) => {
       const { token, newPassword } = req.body;
 
       // Check if token exists in the database and is not expired
-      const [users] = await db.query("SELECT id FROM seelaikaari_users WHERE reset_token = $1 AND token_exp > NOW()", [token]);
-
-      if (users.length === 0) {
+      const users = await db.query(
+        "SELECT id FROM elite_products.users WHERE reset_token = $1 AND token_exp::TIMESTAMP > NOW()", 
+        [token]
+    );
+    
+    
+      if (users.rows.length === 0) {
           return res.status(400).json({ message: "Invalid or expired token" });
       }
 
-      const userId = users[0].id; // Extract user ID
+      const userId = users.rows[0].id; // Extract user ID
 
       // Hash the new password
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       // Update the user's password
-      const [result] = await db.execute(
-          "UPDATE seelaikaari_users SET password = $1, reset_token = NULL, token_exp = NULL WHERE id = $2",
+      const result = await db.query(
+          "UPDATE elite_products.users SET password = $1, reset_token = NULL, token_exp = NULL WHERE id = $2",
           [hashedPassword, userId]
       );
-
+      console.log(result);
       if (result.affectedRows === 0) {
           return res.status(500).json({ message: "Password reset failed" });
       }

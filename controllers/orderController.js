@@ -41,13 +41,13 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
       order_id, userDetails,payment_id,signature,country="India",
       payment_method="Prepaid", shipping_charges=10, totalAmount, weight="2", cartItems,user
     } = req.body;
- console.log(order_id, userDetails,payment_id,signature,country,
-  payment_method, shipping_charges, totalAmount, weight, cartItems,user);
+ 
  
     if (!order_id || !payment_id || !signature || cartItems.length === 0) {
       return res.status(400).json({ success: false, message: "Missing required payment fields or cart is empty!" });
     }
-
+  console.log(cartItems);
+  
     // Verify Razorpay Payment Signature
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -78,19 +78,19 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
       order_items:cartItems,
       user
     };
-   const result = await orderModel.createOrder(newOrder);
+  //  const result = await orderModel.createOrder(newOrder);
 
-    // Insert order items into the cartItems table
-    for (let item of cartItems) {
-      const orderItem = {
-        order_id: result.insertId,   // The ID of the order we just created
-        product_id: item.id,  // From the request body
-        quantity: item.quantity || 1, // Default to 1 if quantity is not provided
-        price: item.price || 0,       // Default to 0 if price is missing
-        total_amount: parseInt(item.price)*parseInt(item.quantity) || 0
-      };
-      //  await orderModel.createOrderItem(orderItem);
-    }
+  //   // Insert order items into the cartItems table
+  //   for (let item of cartItems) {
+  //     const orderItem = {
+  //       order_id: result.rows[0].id,   // The ID of the order we just created
+  //       product_id: item.id,  // From the request body
+  //       quantity: item.quantity || 1, // Default to 1 if quantity is not provided
+  //       price: item.price || 0,       // Default to 0 if price is missing
+  //       total_amount: parseInt(item.price)*parseInt(item.quantity) || 0
+  //     };
+  //      await orderModel.createOrderItem(orderItem);
+  //   }
 
     // Get ShipRocket API token
     // const token = await getShipRocketToken();
@@ -111,7 +111,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
     const customerMailOptions = {
       from: process.env.EMAIL_USER,
       to: userDetails.email,
-      subject: "Order Confirmation from Akilesh Store",
+      subject: "Order Confirmation from Kelite Store",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px; background-color: #f9f9f9;">
           <div style="text-align: center; padding-bottom: 20px;">
@@ -132,7 +132,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
               <tbody>
                 ${cartItems.map(item =>`
                   <tr>
-                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.title}</td>
                     <td style="padding: 10px; text-align: center; border-bottom: 1px solid #eee;">${item.quantity}</td>
                     <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">₹${item.price}</td>
                   </tr>
@@ -151,8 +151,8 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
           </div>
     
           <div style="margin-top: 20px; text-align: center; padding: 15px; font-size: 12px; color: #999;">
-            <p>For any queries, contact us at support@akileshstore.com</p>
-            <p>&copy; 2025 Akilesh Store. All rights reserved.</p>
+            <p>For any queries, contact us at support@Kelitestore.com</p>
+            <p>&copy; 2025 Kelite Store. All rights reserved.</p>
           </div>
         </div>
       `
@@ -161,7 +161,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
     const ownerMailOptions = {
       from: process.env.EMAIL_USER,
       to: "smanoraj25@gmail.com",
-      subject: "New Order Received - Akilesh Store",
+      subject: "New Order Received - Kelite Store",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px; background-color: #f9f9f9;">
           <h2 style="color: #4CAF50; text-align: center;">New Order Received</h2>
@@ -185,7 +185,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
             <tbody>
               ${cartItems.map(item => `
                 <tr>
-                  <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+                  <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.title}</td>
                   <td style="padding: 10px; text-align: center; border-bottom: 1px solid #eee;">${item.quantity}</td>
                   <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">₹${item.price}</td>
                 </tr>
@@ -200,20 +200,20 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
           <p style="margin-top: 20px; color: #555;">Please process the order accordingly.</p>
     
           <div style="margin-top: 20px; text-align: center; padding: 15px; font-size: 12px; color: #999;">
-            <p>For any queries, contact us at support@akileshstore.com</p>
-            <p>&copy; 2025 Akilesh Store. All rights reserved.</p>
+            <p>For any queries, contact us at support@Kelitestore.com</p>
+            <p>&copy; 2025 Kelite Store. All rights reserved.</p>
           </div>
         </div>
       `
     };
     
 
-    // // Send emails
+    // // // Send emails
     //  await transporter.sendMail(customerMailOptions);
     //  console.log(`Email sent to customer: ${userDetails.email}`);
 
     //  await transporter.sendMail(ownerMailOptions);
-    //  console.log("Email sent to store owner: seelaikaari123@gmail.com");
+    //  console.log("Email sent to store owner: kelites@gmail.com");
 
     res.status(201).json({ success: true, message: "Order stored, email sent to customer & owner!", order: newOrder });
   } catch (error) {
