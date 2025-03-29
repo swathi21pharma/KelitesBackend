@@ -160,7 +160,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
     // Email to Store Owner
     const ownerMailOptions = {
       from: process.env.EMAIL_USER,
-      to: "smanoraj25@gmail.com",
+      to: "Care@keliteglobalsolutions.com",
       subject: "New Order Received - Kelite Store",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px; background-color: #f9f9f9;">
