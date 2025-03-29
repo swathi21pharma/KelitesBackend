@@ -17,11 +17,11 @@
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  host: process.env.VERCEL_HOST,
-  port: process.env.VERCEL_PORT,
-  user: process.env.VERCEL_USER,
-  password: process.env.VERCEL_PASSWORD,
-  database: process.env.VERCEL_DB,
+  host: process.env.VERCELs_HOST,
+  port: process.env.VERCELs_PORT,
+  user: process.env.VERCELs_USER,
+  password: process.env.VERCELs_PASSWORD,
+  database: process.env.VERCELs_DB,
   max: 10, 
   idleTimeoutMillis: 30000, 
   ssl: {
