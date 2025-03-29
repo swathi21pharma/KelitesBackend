@@ -46,7 +46,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
     if (!order_id || !payment_id || !signature || cartItems.length === 0) {
       return res.status(400).json({ success: false, message: "Missing required payment fields or cart is empty!" });
     }
-  console.log(cartItems);
+  console.log(cartItems,userDetails);
   
     // Verify Razorpay Payment Signature
     const expectedSignature = crypto
@@ -78,19 +78,19 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
       order_items:cartItems,
       user
     };
-  //  const result = await orderModel.createOrder(newOrder);
+   const result = await orderModel.createOrder(newOrder);
 
-  //   // Insert order items into the cartItems table
-  //   for (let item of cartItems) {
-  //     const orderItem = {
-  //       order_id: result.rows[0].id,   // The ID of the order we just created
-  //       product_id: item.id,  // From the request body
-  //       quantity: item.quantity || 1, // Default to 1 if quantity is not provided
-  //       price: item.price || 0,       // Default to 0 if price is missing
-  //       total_amount: parseInt(item.price)*parseInt(item.quantity) || 0
-  //     };
-  //      await orderModel.createOrderItem(orderItem);
-  //   }
+    // Insert order items into the cartItems table
+    for (let item of cartItems) {
+      const orderItem = {
+        order_id: result.rows[0].id,   // The ID of the order we just created
+        product_id: item.id,  // From the request body
+        quantity: item.quantity || 1, // Default to 1 if quantity is not provided
+        price: item.price || 0,       // Default to 0 if price is missing
+        total_amount: parseInt(item.price)*parseInt(item.quantity) || 0
+      };
+       await orderModel.createOrderItem(orderItem);
+    }
 
     // Get ShipRocket API token
     // const token = await getShipRocketToken();
@@ -172,6 +172,7 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
           <p><strong>Name:</strong> ${userDetails.name}</p>
           <p><strong>Email:</strong> ${userDetails.email}</p>
           <p><strong>Phone:</strong> ${userDetails.phone}</p>
+          <p><strong>Address:</strong> ${userDetails.address1 +", "+userDetails.address2 +", "+userDetails.state +", "+ userDetails.city+" ,"+userDetails.pincode}</p>
     
           <h3 style="color: #333;">Order Summary:</h3>
           <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
@@ -209,10 +210,10 @@ const verifyPaymentAndCreateOrder = async (req, res) => {
     
 
     // // // Send emails
-    //  await transporter.sendMail(customerMailOptions);
+     await transporter.sendMail(customerMailOptions);
     //  console.log(`Email sent to customer: ${userDetails.email}`);
 
-    //  await transporter.sendMail(ownerMailOptions);
+     await transporter.sendMail(ownerMailOptions);
     //  console.log("Email sent to store owner: kelites@gmail.com");
 
     res.status(201).json({ success: true, message: "Order stored, email sent to customer & owner!", order: newOrder });
